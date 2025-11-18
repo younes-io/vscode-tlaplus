@@ -20,13 +20,17 @@ export function saveStreamToFile(src: Readable | null, filePath: string): void {
             return;
         }
         const sw = new StreamWriter(fd);
-        src?.on('data', (data) => writeToFile(sw, data));
-        src?.on('end', () => closeFile(sw));
+        if (!src) {
+            closeFile(sw);
+            return;
+        }
+        src.on('data', (data) => writeToFile(sw, data));
+        src.on('end', () => closeFile(sw));
     });
 }
 
 function writeToFile(sw: StreamWriter, chunk: Buffer | string) {
-    if (!sw.fd) {
+    if (sw.fd === undefined) {
         return;
     }
     fs.write(sw.fd, Buffer.from(chunk), (err) => {
@@ -38,7 +42,7 @@ function writeToFile(sw: StreamWriter, chunk: Buffer | string) {
 }
 
 function closeFile(sw: StreamWriter) {
-    if (!sw.fd) {
+    if (sw.fd === undefined) {
         return;
     }
     fs.close(sw.fd, (err) => {
